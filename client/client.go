@@ -10,6 +10,11 @@ type RouteGuide struct {
 	client __.RouteGuideClient
 }
 
+func NewRouteGuide(c __.RouteGuideClient) *RouteGuide {
+	newRG := RouteGuide{client: c}
+	return &newRG
+}
+
 func (rg *RouteGuide) GetFeatures(ctx context.Context, points []__.Point) ([]__.Feature, error) {
 	//TODO Add your implementation here
 	features := make([]__.Feature, len(points))
