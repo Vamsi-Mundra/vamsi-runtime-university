@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"log"
 
 	__ "github.com/heroku/vamsi-runtime-university/spec"
 )
@@ -23,6 +24,7 @@ func (rg *RouteGuide) GetFeatures(ctx context.Context, points []__.Point) ([]__.
 		if e != nil {
 			return nil, e
 		}
+		log.Println("Feature: %v", *feat)
 		features[i] = *feat
 	}
 	return features, nil
