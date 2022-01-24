@@ -12,50 +12,36 @@ import (
 )
 
 type Config struct {
-	GrpcHostName string `env:"SERVER_URL,default=grpc-server.herokuapp.com:80"`
-}
-
-func createConn(hostName string) *grpc.ClientConn {
-	conn, err := grpc.Dial(hostName, grpc.WithInsecure())
-	if err != nil {
-		log.Fatalln(err)
-	}
-	return conn
-}
-
-func createGrpcClient(conn *grpc.ClientConn) (*client.RouteGuide, context.Context) {
-	rgc := __.NewRouteGuideClient(conn)
-	rg := client.NewRouteGuide(rgc)
-	ctx := context.Background()
-	return rg, ctx
+	ServerURL string `env:"SERVER_URL,default=grpc-server.herokuapp.com:80"`
 }
 
 func main() {
-
-	flag.String("help", "", "Enter a latitude & longitude to receive the feature for that point.")
-	var latitude = flag.Int("latitude", 0, "Enter a latitude value.")
-	var longitude = flag.Int("longitude", 0, "Enter a longitude value.")
+	var lat = flag.Int("lat", 407838351, "latitude of the point")
+	var long = flag.Int("long", -746143763, "longitude of the point")
 	flag.Parse()
-	// flag.String("help", "", "")
+
 	var cfg Config
 	err := envdecode.Decode(&cfg)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatal("Could not decode env variables: ", err)
 	}
-	connection := createConn(cfg.GrpcHostName)
-	defer connection.Close()
-	routeGuide, ctx := createGrpcClient(connection)
-	point := []__.Point{{Latitude: int32(*latitude), Longitude: int32(*longitude)}}
-	results, err := routeGuide.GetFeatures(ctx, point)
 
+	points := []__.Point{
+		{Latitude: int32(*lat), Longitude: int32(*long)},
+	}
+
+	conn, err := grpc.Dial(cfg.ServerURL, grpc.WithInsecure())
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatal("could not create client connection: ", err)
+	}
+	defer conn.Close()
+	log.Println("connection created")
+
+	rg := client.NewRouteGuide(__.NewRouteGuideClient(conn))
+	features, err := rg.GetFeatures(context.Background(), points)
+	if err != nil {
+		log.Fatal("couldn't not get features: ", err)
 	}
 
-	for _, result := range results {
-		log.Println(" Feature Name : %v", result.Name)
-		log.Println(result.Name)
-	}
-	log.Println("Results : ")
-	log.Println(results)
+	log.Println("Features:", features)
 }
